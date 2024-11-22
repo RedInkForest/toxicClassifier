@@ -108,8 +108,8 @@ class ToxicModel(nn.Module):
             )
     
 if __name__ == "__main__":
-    df_train = pd.read_csv() #read from db
-    df_valid = pf.read_csv() #read from db
+    df_train = pd.read_csv("./toxicity_en.csv") #read from db
+    df_valid = pf.read_csv("./toxicity_en.csv") #read from db
 
     train_dataset = BERTDataset(
         df_train.comment_text.values, #input
