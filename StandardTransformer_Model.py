@@ -4,42 +4,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 from torch.utils.data import DataLoader
 from transformers import AdamW
-import psycopg2
 import pandas as pd
 
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
-
-
-# Adding in data from DB
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-
-
-def fetch_data_from_db():
-    try:
-        # Connect to the database
-        connection = psycopg2.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            dbname=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD
-        )
-        print("Connected to the database successfully!")
-
-        query = 'SELECT sentence, "isToxic" FROM vectorize.sentences;'
-        df = pd.read_sql_query(query, connection)
-
-        # Close the connection
-        connection.close()
-        return df
-    except Exception as e:
-        print(f"Error connecting to the database: {e}")
-        return None
     
 # Creating PyTorch datasets and dataloaders
 class TextDataset(torch.utils.data.Dataset):
@@ -93,17 +61,20 @@ class TransformerTextClassifier(nn.Module):
         return x
 
 ## Main code
-# Get data from the database
-df = fetch_data_from_db()
+# Get data from our csv
+csv1 = pd.read_csv('GamingToxicPhrases.csv')
+csv1 = csv1.replace('Toxic', True)
+csv1 = csv1.replace('Not Toxic', False)
+csv1.rename(columns={'text': 'sentence', 'is_toxic': 'isToxic'}, inplace=True)
 
-# Get data from the csv 
-csv = pd.read_csv('toxicity_en.csv')
-csv = csv.replace('Toxic', True)
-csv = csv.replace('Not Toxic', False)
-csv.rename(columns={'text': 'sentence', 'is_toxic': 'isToxic'}, inplace=True)
+# Get data from the other csv 
+csv2 = pd.read_csv('toxicity_en.csv')
+csv2 = csv2.replace('Toxic', True)
+csv2 = csv2.replace('Not Toxic', False)
+csv2.rename(columns={'text': 'sentence', 'is_toxic': 'isToxic'}, inplace=True)
 
 # Combine the 2 dataframes
-dataset = pd.concat([df, csv])
+dataset = pd.concat([csv1, csv2])
 dataset['isToxic'] = dataset['isToxic'].astype(int)
 
 # Split dataset into train and test sets
